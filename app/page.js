@@ -1,101 +1,205 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [channelLink, setChannelLink] = useState(""); // Para almacenar el canal ingresado
+  const [error, setError] = useState(null); // Para manejar posibles errores
+  const [videoLinks, setVideoLinks] = useState([]); // Para almacenar los links de los videos
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
+
+    try {
+      const response = await fetch("/api/links", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ channelLink }), // Enviar como JSON
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Datos de la API:", data); // Verifica los datos recibidos de la API
+        setVideoLinks(Array.isArray(data.array) ? data.array : []);
+        setError(null); // Limpiar cualquier error
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error); // Establecer el mensaje de error
+        setVideoLinks([]); // Limpiar los videos si hay error
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+      setError("Hubo un error al procesar la solicitud.");
+      setVideoLinks([]);
+    }
+  };
+
+  // Función para copiar todos los links al portapapeles
+  const copyLinksToClipboard = () => {
+    const links = videoLinks.map((link) => link.href).join("\n");
+    navigator.clipboard
+      .writeText(links)
+      .then(() => {
+        alert("Links copiados al portapapeles");
+      })
+      .catch((err) => {
+        console.error("Error al copiar al portapapeles:", err);
+      });
+  };
+
+  console.log("Video Links:", videoLinks);
+
+  return (
+    <div
+      style={{
+        fontFamily: "Arial, sans-serif",
+        padding: "2rem",
+        backgroundColor: "#f4f4f9",
+        color: "#333",
+      }}
+    >
+      <h1
+        style={{
+          textAlign: "center",
+          marginBottom: "1rem",
+          color: "#2c3e50",
+        }}
+      >
+        YouTube Links
+      </h1>
+
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          marginBottom: "1rem",
+          textAlign: "center",
+          padding: "1rem",
+          borderRadius: "8px",
+          backgroundColor: "#ffffff",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <input
+          type="text"
+          name="channelLink"
+          value={channelLink}
+          onChange={(e) => setChannelLink(e.target.value)}
+          placeholder="Pega el enlace del canal de YouTube"
+          style={{
+            width: "80%",
+            padding: "8px",
+            marginBottom: "12px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+            fontSize: "14px",
+            color: "#000000",
+          }}
+          required
+        />
+        <br />
+        <button
+          type="submit"
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#0070f3",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            fontSize: "14px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          Obtener Links
+        </button>
+      </form>
+
+      {/* Botón para copiar los links */}
+      <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        <button
+          onClick={copyLinksToClipboard}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            fontSize: "14px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          Copiar al portapapeles
+        </button>
+      </div>
+
+      {/* Indicador de cantidad de links */}
+      {videoLinks.length > 0 && (
+        <p
+          style={{
+            textAlign: "center",
+            marginBottom: "1rem",
+            fontSize: "16px",
+            color: "#0070f3",
+            fontWeight: "bold",
+          }}
+        >
+          {videoLinks.length} Links
+        </p>
+      )}
+
+      {error && (
+        <p style={{ color: "red", textAlign: "center", fontSize: "14px" }}>
+          {error}
+        </p>
+      )}
+
+      {/* Mostrar los links en columnas con scroll */}
+      {Array.isArray(videoLinks) && videoLinks.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "8px",
+            maxHeight: "400px",
+            overflowY: "auto",
+            padding: "1rem",
+            border: "1px solid #ccc",
+            borderRadius: "5px",
+            backgroundColor: "#ffffff",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          {videoLinks.map((link, index) => (
+            <div
+              key={index}
+              style={{
+                padding: "8px",
+                backgroundColor: "#ecf0f1",
+                borderRadius: "5px",
+                border: "1px solid #ddd",
+                textAlign: "center",
+                overflow: "hidden",
+                wordBreak: "break-word",
+              }}
+            >
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#3498db",
+                  fontSize: "14px",
+                  textDecoration: "none",
+                }}
+              >
+                {link.href}
+              </a>
+            </div>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }
