@@ -1,4 +1,5 @@
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
+const chromium = require("@sparticuz/chromium");
 
 export async function POST(req) {
   try {
@@ -16,7 +17,9 @@ export async function POST(req) {
     }
     const URL = `${channelLink}/videos`;
     const browser = await puppeteer.launch({
-      headless: true,
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
     });
 
     const page = await browser.newPage();
